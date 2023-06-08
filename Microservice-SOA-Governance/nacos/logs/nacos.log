@@ -1,0 +1,191 @@
+2023-06-07 19:56:56,890 INFO Starting Nacos v1.4.1 on HaofuMeis-MacBook-Pro.local with PID 48023 (/Users/haofumei/Documents/Microservices/Microservice-SOA-Governance/nacos/target/nacos-server.jar started by haofumei in /Users/haofumei/Documents/Microservices/Microservice-SOA-Governance/nacos/bin)
+
+2023-06-07 19:56:56,890 INFO The following profiles are active: standalone
+
+2023-06-07 19:56:58,129 INFO Bean 'org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler@4f2613d1' of type [org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+
+2023-06-07 19:56:58,131 INFO Bean 'methodSecurityMetadataSource' of type [org.springframework.security.access.method.DelegatingMethodSecurityMetadataSource] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+
+2023-06-07 19:56:58,291 INFO Tomcat initialized with port(s): 8848 (http)
+
+2023-06-07 19:56:58,310 INFO Starting service [Tomcat]
+
+2023-06-07 19:56:58,310 INFO Starting Servlet engine: [Apache Tomcat/9.0.38]
+
+2023-06-07 19:56:58,374 WARN Failed to scan [jar:file:/Users/haofumei/Documents/Microservices/Microservice-SOA-Governance/nacos/target/nacos-server.jar!/BOOT-INF/lib/spring-webmvc-5.1.18.RELEASE.jar!/] from classloader hierarchy
+
+java.io.IOException: Unable to open root Jar file 'war:file:/Users/haofumei/Documents/Microservices/Microservice-SOA-Governance/nacos/target/nacos-server.jar*/BOOT-INF/lib/spring-webmvc-5.1.18.RELEASE.jar'
+	at org.springframework.boot.loader.jar.Handler.getRootJarFile(Handler.java:318)
+	at org.springframework.boot.loader.jar.Handler.getRootJarFileFromUrl(Handler.java:300)
+	at org.springframework.boot.loader.jar.Handler.openConnection(Handler.java:86)
+	at java.base/java.net.URL.openConnection(URL.java:1094)
+	at java.base/java.net.URL.openStream(URL.java:1161)
+	at org.apache.tomcat.util.descriptor.tld.TldResourcePath.openStream(TldResourcePath.java:127)
+	at org.apache.tomcat.util.descriptor.tld.TldParser.parse(TldParser.java:61)
+	at org.apache.jasper.servlet.TldScanner.parseTld(TldScanner.java:275)
+	at org.apache.jasper.servlet.TldScanner$TldScannerCallback.scan(TldScanner.java:315)
+	at org.apache.tomcat.util.scan.StandardJarScanner.process(StandardJarScanner.java:387)
+	at org.apache.tomcat.util.scan.StandardJarScanner.processURLs(StandardJarScanner.java:318)
+	at org.apache.tomcat.util.scan.StandardJarScanner.doScanClassPath(StandardJarScanner.java:270)
+	at org.apache.tomcat.util.scan.StandardJarScanner.scan(StandardJarScanner.java:233)
+	at org.apache.jasper.servlet.TldScanner.scanJars(TldScanner.java:262)
+	at org.apache.jasper.servlet.TldScanner.scan(TldScanner.java:104)
+	at org.apache.jasper.servlet.JasperInitializer.onStartup(JasperInitializer.java:83)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:5128)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:183)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1384)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1374)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:75)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:909)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:843)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:183)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1384)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1374)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:75)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:909)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:262)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:183)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:421)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:183)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:930)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:183)
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:486)
+	at org.springframework.boot.web.embedded.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:105)
+	at org.springframework.boot.web.embedded.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:86)
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:416)
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:180)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:180)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:153)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:544)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:141)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:744)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:391)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:312)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1215)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1204)
+	at com.alibaba.nacos.Nacos.main(Nacos.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:577)
+	at org.springframework.boot.loader.MainMethodRunner.run(MainMethodRunner.java:49)
+	at org.springframework.boot.loader.Launcher.launch(Launcher.java:107)
+	at org.springframework.boot.loader.Launcher.launch(Launcher.java:58)
+	at org.springframework.boot.loader.PropertiesLauncher.main(PropertiesLauncher.java:467)
+Caused by: java.lang.IllegalStateException: Not a file URL
+	at org.springframework.boot.loader.jar.Handler.getRootJarFile(Handler.java:306)
+	... 58 common frames omitted
+2023-06-07 19:56:58,429 INFO At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+
+2023-06-07 19:56:58,431 INFO Initializing Spring embedded WebApplicationContext
+
+2023-06-07 19:56:58,431 INFO Root WebApplicationContext: initialization completed in 1507 ms
+
+2023-06-07 19:56:58,652 INFO HikariPool-1 - Starting...
+
+2023-06-07 19:56:58,656 WARN Registered driver with driverClassName=org.apache.derby.jdbc.EmbeddedDriver was not found, trying direct instantiation.
+
+2023-06-07 19:56:58,846 INFO HikariPool-1 - Driver does not support get/set network timeout for connections. (Feature not implemented: No details.)
+
+2023-06-07 19:56:58,848 INFO HikariPool-1 - Start completed.
+
+2023-06-07 19:56:59,110 INFO Nacos-related cluster resource initialization
+
+2023-06-07 19:56:59,113 INFO The cluster resource is initialized
+
+2023-06-07 19:56:59,284 INFO Reflections took 15 ms to scan 1 urls, producing 4 keys and 6 values 
+
+2023-06-07 19:56:59,295 INFO Reflections took 2 ms to scan 1 urls, producing 6 keys and 26 values 
+
+2023-06-07 19:56:59,301 INFO Reflections took 2 ms to scan 1 urls, producing 3 keys and 15 values 
+
+2023-06-07 19:56:59,305 INFO Reflections took 1 ms to scan 1 urls, producing 2 keys and 12 values 
+
+2023-06-07 19:56:59,626 INFO Initializing ExecutorService 'applicationTaskExecutor'
+
+2023-06-07 19:56:59,673 INFO Adding welcome page: class path resource [static/index.html]
+
+2023-06-07 19:56:59,823 INFO Creating filter chain: Ant [pattern='/**'], []
+
+2023-06-07 19:56:59,837 INFO Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@44d64d4e, org.springframework.security.web.context.SecurityContextPersistenceFilter@210d2a6c, org.springframework.security.web.header.HeaderWriterFilter@7f9fc8bd, org.springframework.security.web.csrf.CsrfFilter@1c7350b0, org.springframework.security.web.authentication.logout.LogoutFilter@157ec23b, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@4086d8fb, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@176555c, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1dd74143, org.springframework.security.web.session.SessionManagementFilter@7f608e21, org.springframework.security.web.access.ExceptionTranslationFilter@2a334bac]
+
+2023-06-07 19:56:59,885 INFO Initializing ExecutorService 'taskScheduler'
+
+2023-06-07 19:56:59,894 INFO Exposing 2 endpoint(s) beneath base path '/actuator'
+
+2023-06-07 19:56:59,942 INFO Tomcat started on port(s): 8848 (http) with context path '/nacos'
+
+2023-06-07 19:56:59,944 INFO Started Nacos in 3.624 seconds (JVM running for 3.904)
+
+2023-06-07 19:56:59,944 INFO Nacos started successfully in stand alone mode. use embedded storage
+
+2023-06-07 19:57:09,707 INFO Initializing Spring DispatcherServlet 'dispatcherServlet'
+
+2023-06-07 19:57:09,707 INFO Initializing Servlet 'dispatcherServlet'
+
+2023-06-07 19:57:09,720 INFO Completed initialization in 13 ms
+
+2023-06-07 20:06:59,404 INFO [capacityManagement] start correct usage
+
+2023-06-07 20:06:59,446 INFO [capacityManagement] end correct usage, cost: 0s
+
+2023-06-07 20:06:59,468 WARN clearConfigHistory start
+
+2023-06-07 20:16:59,453 INFO [capacityManagement] start correct usage
+
+2023-06-07 20:16:59,456 INFO [capacityManagement] end correct usage, cost: 0s
+
+2023-06-07 20:16:59,480 WARN clearConfigHistory start
+
+2023-06-07 20:26:59,470 INFO [capacityManagement] start correct usage
+
+2023-06-07 20:26:59,474 INFO [capacityManagement] end correct usage, cost: 0s
+
+2023-06-07 20:26:59,501 WARN clearConfigHistory start
+
+2023-06-07 20:36:59,483 INFO [capacityManagement] start correct usage
+
+2023-06-07 20:36:59,486 INFO [capacityManagement] end correct usage, cost: 0s
+
+2023-06-07 20:36:59,511 WARN clearConfigHistory start
+
+2023-06-07 20:46:59,494 INFO [capacityManagement] start correct usage
+
+2023-06-07 20:46:59,499 INFO [capacityManagement] end correct usage, cost: 0s
+
+2023-06-07 20:46:59,526 WARN clearConfigHistory start
+
+2023-06-07 20:56:59,510 INFO [capacityManagement] start correct usage
+
+2023-06-07 20:56:59,514 INFO [capacityManagement] end correct usage, cost: 0s
+
+2023-06-07 20:56:59,538 WARN clearConfigHistory start
+
+2023-06-07 21:03:58,758 WARN [ConfigServer-HttpClientManager] Start destroying NacosRestTemplate
+
+2023-06-07 21:03:58,758 WARN [ThreadPoolManager] Start destroying ThreadPool
+
+2023-06-07 21:03:58,758 WARN [HttpClientBeanHolder] Start destroying common HttpClient
+
+2023-06-07 21:03:58,758 WARN [NotifyCenter] Start destroying Publisher
+
+2023-06-07 21:03:58,758 WARN [WatchFileCenter] start close
+
+2023-06-07 21:03:58,759 WARN [WatchFileCenter] start to shutdown this watcher which is watch : /Users/haofumei/Documents/Microservices/Microservice-SOA-Governance/nacos/conf
+
+2023-06-07 21:03:58,759 WARN [NotifyCenter] Destruction of the end
+
+2023-06-07 21:03:58,759 WARN [WatchFileCenter] already closed
+
+2023-06-07 21:03:58,762 WARN [ConfigServer-HttpClientManager] Destruction of the end
+
+2023-06-07 21:03:58,763 WARN [HttpClientBeanHolder] Destruction of the end
+
+2023-06-07 21:03:58,764 INFO Shutting down ExecutorService 'taskScheduler'
+
+2023-06-07 21:03:58,766 INFO Shutting down ExecutorService 'applicationTaskExecutor'
+
+2023-06-07 21:04:16,547 WARN [ThreadPoolManager] Destruction of the end
+

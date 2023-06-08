@@ -3,11 +3,13 @@
 - [RestTemplate](#resttemplate)
 - [Eureka](#eureka)
 - [Ribbon Loadbalancer](#ribbon-loadbalancer)
+- [Nacos](#nacos)
 - [Zookeeper](#zookeeper)
 
 # Demo Setup
 1. Load the sql file from sql directory
 2. Open cloud-demo with IDEA
+3. Environment: JDK1.8
 # RestTemplate
 
 *RestTemplate is the central class within the Spring framework for executing synchronous HTTP requests on the client side.*
@@ -122,6 +124,9 @@ public class OrderService {
   ```
 2. Add config to application.yml.
   ```yml
+  userservice:
+    ribbon:
+      NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
   ```
 **Eager-load**: create LoadBalanceClient at the time when the application run instead of first request. Reduce the first request time.
 ```yml
@@ -131,4 +136,74 @@ ribbon:
     clients:
       - userservice #eager-load userservice
 ```
+# Nacos
+Nacos is committed to help you discover, configure, and manage your microservices.
+1. Download and install Nacos:
+[Quick Start for Nacos](https://nacos.io/en-us/docs/quick-start.html)
+2. Register microservices to Nacos
+   1. Add spring-cloud-alilbaba to parent dependency.
+   ```xml
+   <dependency>
+      <groupId>com.alibaba.cloud</groupId>
+      <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+      <version>2.2.5.RELEASE</version>
+   </dependency>
+   ```
+   2. Add Nacos dependency to microservices.
+   ```xml
+   <dependency>
+      <groupId>com.alibaba.cloud</groupId>
+      <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+      <version>2.2.5.RELEASE</version>
+   </dependency>
+   ```
+   3. Add Nacos address to microservices application.yml
+   ```yml
+   spring:
+      cloud:
+        nacos:
+          server-addr: localhost:8848
+   ```
+   4. Run the microservices.
+3. Cluster configuration
+```yml
+spring:
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+      discovery:
+        cluster-name: CA
+```
+4. Same cluster first loadbalancer
+```yml
+userservice:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule
+```
+5. Change the weights of traffic in the same cluster
+![weights](./images/Screenshot%202023-06-07%20at%208.50.01%20PM.png)
+The node who has 0 weight can be visited.
+6. namespace(use to seperate the services)
+  1. Create namespace in UI
+  2. Add microservices to this namespace
+  ```yml
+  spring:
+    cloud:
+      nacos:
+        server-addr: localhost:8848
+        discovery:
+          cluster-name: CA
+          namespace: 73f148f3-41e7-483d-8acb-53f0c8857bcb # namespace id
+  ```
+7. Non-ephemeral node(ephemeral node will be kick out when it fails)
+```yml
+spring:
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+      discovery:
+        cluster-name: CA
+        ephemeral: false
+```
+
 # Zookeeper
