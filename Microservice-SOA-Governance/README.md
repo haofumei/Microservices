@@ -207,17 +207,17 @@ userservice:
 ![weights](./images/Screenshot%202023-06-07%20at%208.50.01%20PM.png)
 The node who has 0 weight can be visited.
 6. namespace(use to seperate the services)
-  1. Create namespace in UI
-  2. Add microservices to this namespace
-  ```yml
-  spring:
-    cloud:
-      nacos:
-        server-addr: localhost:8848
-        discovery:
-          cluster-name: CA
-          namespace: 73f148f3-41e7-483d-8acb-53f0c8857bcb # namespace id
-  ```
+     1. Create namespace in UI
+     2. Add microservices to this namespace
+    ```yml
+    spring:
+      cloud:
+        nacos:
+          server-addr: localhost:8848
+          discovery:
+            cluster-name: CA
+            namespace: 73f148f3-41e7-483d-8acb-53f0c8857bcb # namespace id
+    ```
 7. Non-ephemeral node(ephemeral node will be kick out when it fails)
 ```yml
 spring:
