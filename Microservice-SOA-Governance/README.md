@@ -1,6 +1,7 @@
 
 - [Demo Setup](#demo-setup)
 - [RestTemplate](#resttemplate)
+- [Feign](#feign)
 - [Eureka](#eureka)
 - [Ribbon Loadbalancer](#ribbon-loadbalancer)
 - [Nacos](#nacos)
@@ -51,6 +52,27 @@ public class OrderService {
         // 4.return
         return order;
     }
+}
+```
+# Feign
+Feign makes writing java http clients easier.
+
+**Setup**
+1. Dependency
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+2. Add @EnableFeignClients to main class
+3. Define Feign interface
+```java
+@FeignClient("userservice")
+public interface UserClient {
+
+    @GetMapping("/user/{id}")
+    User findById(@PathVariable("id") Long id);
 }
 ```
 
@@ -138,6 +160,7 @@ ribbon:
 ```
 # Nacos
 Nacos is committed to help you discover, configure, and manage your microservices.
+**Nacos Basis**
 1. Download and install Nacos:
 [Quick Start for Nacos](https://nacos.io/en-us/docs/quick-start.html)
 2. Register microservices to Nacos
@@ -205,5 +228,99 @@ spring:
         cluster-name: CA
         ephemeral: false
 ```
+**Configuration managerment**
+1. Process
+![Config fetch process](./images/Screenshot%202023-06-08%20at%204.39.34%20PM.png)
+2. Add dependency to microservices
+```xml
+<dependency>
+  <groupId>com.alibaba.cloud</groupId>
+  <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+  <version>2.2.5.RELEASE</version>
+</dependency>
+```
+3. Create bootstrap.yml which has higher priority than application.yml
+```yml
+spring:
+  application:
+    name: userservice
+  profiles:
+    active: dev # enviroment
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848 # nacos address
+      config:
+        file-extension: yaml # file type
+```
+4. Create configuration in UI
+![Nacos config create](./images/Screenshot%202023-06-08%20at%204.55.46%20PM.png)
+5. Fetch Nacos configuration and auto-refresh
+```Java
+@Value("${pattern.dateformat}")
+private String dateformat;
+// Two ways to refresh the config automatically
+// 1. Add @RefreshScope to the "class" who owns @Value
+// 2. By @ConfigurationProperties
+@Component
+@Data
+@ConfigurationProperties(prefix = "pattern")
+public class PatternProperties {
+    private String dateformat;
+}
+```
+6. Multi-environment configurations
+```Java
+For example we have configs:
+1. microservice-dev.yaml
+2. microservice-pro.yaml
+3. microservice.yaml
+The shared configuration can be stored in microservice.yaml, the their priority:
+microservice-env.yaml > microservice.yaml > local yaml
+```
+**Cluster deployment**
+![Nacos cluster](./images/Screenshot%202023-06-08%20at%205.54.57%20PM.png)
+[Cluster deployment instructions](https://nacos.io/en-us/docs/cluster-mode-quick-start.html)
+1. Build MySQL cluster and create tables for Nacos.(details can be found in above link)
+2. Install Nacos.
+3. Modify Nacos cluster and database configuration.
+```txt
+1. Modify the port in cluster.conf, for example:
+127.0.0.1:8845
+127.0.0.1.8846
+127.0.0.1.8847
+2. Add database config to application.properties, for example:
+spring.datasource.platform=mysql
 
+db.num=1
+
+db.url.0=jdbc:mysql://127.0.0.1:3306/nacos?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=your database
+db.password.0=your pass
+```
+4. Start Nacos nodes.
+```txt
+1. Copy enough nacos file.
+2. Modify the port to the port you want in every application.properties.
+3. Start nacos individually.
+```
+5. Set up Nginx.
+
+Add new config to conf/nginx.conf after install.
+```nginx
+upstream nacos-cluster {
+    server 127.0.0.1:8845;
+	server 127.0.0.1:8846;
+	server 127.0.0.1:8847;
+}
+
+server {
+    listen       80;
+    server_name  localhost;
+
+    location /nacos {
+        proxy_pass http://nacos-cluster;
+    }
+}
+```
 # Zookeeper

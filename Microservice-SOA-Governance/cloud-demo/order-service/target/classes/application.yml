@@ -13,7 +13,6 @@ spring:
       server-addr: localhost:8848
       discovery:
         cluster-name: CA
-        namespace: 73f148f3-41e7-483d-8acb-53f0c8857bcb
 mybatis:
   type-aliases-package: cn.itcast.user.pojo
   configuration:
