@@ -279,8 +279,11 @@ The shared configuration can be stored in microservice.yaml, the their priority:
 microservice-env.yaml > microservice.yaml > local yaml
 ```
 **Cluster deployment**
+
 ![Nacos cluster](./images/Screenshot%202023-06-08%20at%205.54.57%20PM.png)
+
 [Cluster deployment instructions](https://nacos.io/en-us/docs/cluster-mode-quick-start.html)
+
 1. Build MySQL cluster and create tables for Nacos.(details can be found in above link)
 2. Install Nacos.
 3. Modify Nacos cluster and database configuration.
