@@ -1,0 +1,37 @@
+server:
+  port: 10010
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # nacos address
+    gateway:
+      routes:
+        - id: user-service # router id
+          uri: lb://userservice # routing target address, lb: load balance
+          predicates:
+            - Path=/user/**
+          filters:
+            - AddRequestHeader=Truth, route filter
+        - id: order-service
+          uri: lb://orderservice
+          predicates:
+            - Path=/order/**
+      default-filters: # effect on all routes
+        - AddRequestHeader=Truth, default filter
+      globalcors:
+        add-to-simple-url-handler-mapping: true # options request can pass
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:8090"
+            allowedMethods:
+              - "GET"
+              - "POST"
+              - "DELETE"
+              - "PUT"
+              - "OPTIONS"
+            allowedHeaders: "*"
+            allowCredentials: true # carried cookie
+            maxAge: 360000 # max available time

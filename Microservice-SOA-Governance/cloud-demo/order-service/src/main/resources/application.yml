@@ -34,3 +34,12 @@ ribbon:
     enabled: true
     clients:
       - userservice #eager-load userservice
+feign:
+  client:
+    config:
+      default:
+        logger-level: BASIC
+  httpclient:
+    enabled: true
+    max-connections: 200
+    max-connections-per-route: 50

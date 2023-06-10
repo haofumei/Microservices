@@ -2,9 +2,16 @@
 - [Demo Setup](#demo-setup)
 - [RestTemplate](#resttemplate)
 - [Feign](#feign)
+  - [Feign performance optimization](#feign-performance-optimization)
+  - [Feign suggested implement](#feign-suggested-implement)
 - [Eureka](#eureka)
 - [Ribbon Loadbalancer](#ribbon-loadbalancer)
 - [Nacos](#nacos)
+- [Gateway](#gateway)
+  - [Gateway integrates with discovery(Nacos)](#gateway-integrates-with-discoverynacos)
+  - [Route Predicate Factory](#route-predicate-factory)
+  - [Gateway Filter Factory](#gateway-filter-factory)
+  - [CORS](#cors)
 - [Zookeeper](#zookeeper)
 
 # Demo Setup
@@ -74,6 +81,94 @@ public interface UserClient {
     @GetMapping("/user/{id}")
     User findById(@PathVariable("id") Long id);
 }
+```
+**Customized configuration**
+| Type                | Function                | Detail |
+| ------------------- | ----------------------- | ------ |
+| feign.Logger.Level  | Modify log level        | Include: NONE,BASIC,HEADERS,FULL |       
+| feign.codec.Decoder | Response Decoder        | For example: json string to object |
+| feign.codec.Encoder | Request Encoder         | Encode parameters |
+| feign. Contract     | Support annotation      | Default: SpringMVC |
+| feign. Retryer      | Failure retry mechanism | Default: None, but will apply Ribbon retry mechanism |
+
+**Two ways to config log level:**
+1. By configuration file
+  ```yml
+  feign:
+    client:
+      config:
+        default: # global configuration
+          logger-level: FULL
+
+  feign:
+    client:
+      config:
+        microservice: # only config to this microservice
+          logger-level: FULL
+  ```
+2. By java code
+```java
+// 1. create new class
+public class FeignConfiguration {
+
+    @Bean
+    public Logger.Level logLevel() {
+        return Logger.Level.FULL;
+    }
+}
+// 2. global configuration
+@EnableFeignClients(defaultConfiguration = FeignConfiguration.class)
+// 2. single microservice configuration
+@FeignClient(value = "microservice", configuration = FeignConfiguration.class) 
+```
+## Feign performance optimization
+
+**Feign can be implemented by:**
+1. URLConnection: default, not support connection pool.
+2. Apache HttpClient: support connection pool.
+3. OKHttp: support connection pool.
+
+**So:**
+1. Use OKHttp or HttpClient.
+2. Use log level basic or none.
+
+**Connection pool configuration**
+1. dependency
+```xml
+<dependency>
+  <groupId>io.github.openfeign</groupId>
+  <artifactId>feign-httpclient</artifactId>
+</dependency>
+```
+2. application.yml
+```yml
+feign:
+  client:
+    config:
+      default:
+        logger-level: BASIC
+  httpclient:
+    enabled: true
+    max-connections: 200
+    max-connections-per-route: 50
+```
+
+## Feign suggested implement
+1. Controller and FeignClient implement the same interface.
+![tight coupling feign implement](./images/Screenshot%202023-06-09%20at%206.14.51%20PM.png)
+2. Put FeignClient, POJO and configuration into a new module.
+![loose coupling feign implement](./images/Screenshot%202023-06-09%20at%206.22.39%20PM.png)
+
+Process:
+1. Create feign-api module.
+2. Add feign-api dependency to required microservices.
+3. Import feign-api.
+4. Add scan package anotation.
+```java
+// import all the clients
+@EnableFeignClients(basePackages = "...feign.clients")
+// import needed clients
+@EnableFeignClients(clients = {UserClient.class})
 ```
 
 # Eureka
@@ -309,7 +404,7 @@ db.password.0=your pass
 ```
 5. Set up Nginx.
 
-Add new config to conf/nginx.conf after install.
+Add new config to conf/nginx.conf after install. (Nacos cluster mode does not support M1 and M2 macbook, Jun 2023)
 ```nginx
 upstream nacos-cluster {
     server 127.0.0.1:8845;
@@ -326,4 +421,173 @@ server {
     }
 }
 ```
+
+# Gateway
+
+1. User authentication and authorization.
+2. User routing and load balancing.
+3. User traffic limiting.
+
+Gateway: Reactive programming, better performance.
+
+Zuul: Blocking programming.
+
+## Gateway integrates with discovery(Nacos)
+1. Create and add dependency to a new module(gateway).
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-gateway</artifactId>
+</dependency>
+<dependency>
+  <groupId>com.alibaba.cloud</groupId>
+  <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+  <version>2.2.5.RELEASE</version>
+</dependency>
+```
+2. application.yml
+```yml
+server:
+  port: 10010
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # nacos address
+    gateway:
+      routes:
+        - id: user-service # router id
+          uri: lb://userservice # routing target address, lb: load balance
+          predicates:
+            - Path=/user/**
+        - id: order-service
+          uri: lb://orderservice
+          predicates:
+            - Path=/order/**
+```
+
+## Route Predicate Factory
+| name   | direction | example |
+| ---- | ----- | ----- |
+| After      | request after this time | - After=2037-01-20T17:42:47.789-07:00[America/Denver] |
+| Before     | request before this time | - Before=2031-04-13T15:14:47.433+08:00[Asia/Shanghai] |
+| Between    | request between this time | - Between=2037-01-20T17:42:47.789-07:00[America/Denver], 2037-01-21T17:42:47.789-07:00[America/Denver] |
+| Cookie     | request has this cookies | - Cookie=chocolate, ch.p |
+| Header     | request has this header | - Header=X-Request-Id, \d+ |
+| Host       | request to this host | - Host=**.somehost.org,**.anotherhost.org |
+| Method     | request is this method | - Method=GET,POST |
+| Path       | request path match this pattern | - Path=/red/{segment},/blue/** |
+| Query      | request has this parameter | - Query=name, Jack或者- Query=name | 
+| RemoteAddr | ip in this range | - RemoteAddr=192.168.1.1/24 |
+| Weight     | 
+
+## Gateway Filter Factory
+| name | direction |
+| ---- | ------ |
+| AddRequestHeader |
+| RemoveRequestHeader |
+| AddResponseHeader |
+| RemoveResponseHeader |
+| RequestRateLimiter |
+| ... |
+
+1. Default filter
+```yml
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # nacos address
+    gateway:
+      routes:
+        - id: user-service # router id
+          uri: lb://userservice # routing target address, lb: load balance
+          predicates:
+            - Path=/user/**
+        - id: order-service
+          uri: lb://orderservice
+          predicates:
+            - Path=/order/**
+      default-filters: # effect on all routes
+        - AddRequestHeader=Truth, default filter
+```
+2. Route filter
+```yml
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      server-addr: localhost:8848 # nacos address
+    gateway:
+      routes:
+        - id: user-service # router id
+          uri: lb://userservice # routing target address, lb: load balance
+          predicates:
+            - Path=/user/**
+        - id: order-service
+          uri: lb://orderservice
+          predicates:
+            - Path=/order/**
+          filters: # effect on this route
+            - AddRequestHeader=Truth, route filter
+```
+3. Global filter
+```java
+@Order(-1) // filter order
+@Component
+public class AuthorizeFilter implements GlobalFilter {
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // @param exchange: query context, included request, response...
+        // @chain: pass to next filter
+        // @return {Mono<Void>} indicate current filter ends
+        
+        // 1. get request parameters
+        ServerHttpRequest request = exchange.getRequest();
+        MultiValueMap<String, String> queryParams = request.getQueryParams();
+        // 2. get authorization from request parameters
+        String auth = queryParams.getFirst("authorization");
+        // 3. check if it == "admin"
+        if ("admin".equals(auth)) {
+            // 4. go to next filter
+            return chain.filter(exchange);
+        }
+        // 5. stop
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
+    }
+}
+```
+
+**Filter order**
+* Every filter has an order, and the filter who has smaller order has higher priority.
+* Route and default filter's orders begin at 1, and increase by declared order.
+* when the orders are same, default > route > global.
+
+## CORS
+```yml
+# config in application.yml
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true # options request can pass
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:8090"
+            allowedMethods:
+              - "GET"
+              - "POST"
+              - "DELETE"
+              - "PUT"
+              - "OPTIONS"
+            allowedHeaders: "*"
+            allowCredentials: true # carried cookie
+            maxAge: 360000 # max available time 
+```
+
 # Zookeeper
