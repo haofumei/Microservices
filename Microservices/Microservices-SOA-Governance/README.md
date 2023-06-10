@@ -1,23 +1,37 @@
+**Microservice SOA Governance includes:**
+* Service Registration and Discovery
+* Remote Procedure Call, RPC
+* Configuration Management
+* Gateway and Router
 
-- [Demo Setup](#demo-setup)
+**Table of contents**
+
 - [RestTemplate](#resttemplate)
 - [Feign](#feign)
+  - [Setup](#setup)
+  - [Customized configuration](#customized-configuration)
   - [Feign performance optimization](#feign-performance-optimization)
   - [Feign suggested implement](#feign-suggested-implement)
 - [Eureka](#eureka)
-- [Ribbon Loadbalancer](#ribbon-loadbalancer)
+  - [Setup](#setup-1)
+  - [Ribbon Loadbalancer](#ribbon-loadbalancer)
 - [Nacos](#nacos)
+  - [Setup](#setup-2)
+  - [Configuration managerment](#configuration-managerment)
+  - [Cluster deployment](#cluster-deployment)
 - [Gateway](#gateway)
   - [Gateway integrates with discovery(Nacos)](#gateway-integrates-with-discoverynacos)
   - [Route Predicate Factory](#route-predicate-factory)
   - [Gateway Filter Factory](#gateway-filter-factory)
   - [CORS](#cors)
-- [Zookeeper](#zookeeper)
+- [Zookeeper(unfinished)](#zookeeperunfinished)
 
-# Demo Setup
+**Demo Setup and Environment**
 1. Load the sql file from sql directory
 2. Open cloud-demo with IDEA
-3. Environment: JDK1.8
+3. Environment: JDK1.8 and M2 macbook pro
+
+
 # RestTemplate
 
 *RestTemplate is the central class within the Spring framework for executing synchronous HTTP requests on the client side.*
@@ -64,7 +78,7 @@ public class OrderService {
 # Feign
 Feign makes writing java http clients easier.
 
-**Setup**
+## Setup
 1. Dependency
 ```xml
 <dependency>
@@ -82,7 +96,7 @@ public interface UserClient {
     User findById(@PathVariable("id") Long id);
 }
 ```
-**Customized configuration**
+## Customized configuration
 | Type                | Function                | Detail |
 | ------------------- | ----------------------- | ------ |
 | feign.Logger.Level  | Modify log level        | Include: NONE,BASIC,HEADERS,FULL |       
@@ -173,6 +187,9 @@ Process:
 
 # Eureka
 *Eureka is the Netflix Service Discovery Server and Client. The server can be configured and deployed to be highly available, with each server replicating state about the registered services to the others.*
+
+## Setup
+
 1. Build EurekaServer
    1. Create eureka-server project, insert eureka-server dependency.
       ```xml
@@ -226,7 +243,9 @@ Process:
           return new RestTemplate();
       }
       ```
-# Ribbon Loadbalancer
+
+## Ribbon Loadbalancer
+
 **Process and Interface**
 ![Process](./images/Screenshot%202023-06-06%20at%207.05.45%20PM.png)
 ![Interface](./images/Screenshot%202023-06-06%20at%207.09.03%20PM.png)
@@ -254,8 +273,11 @@ ribbon:
       - userservice #eager-load userservice
 ```
 # Nacos
+
 Nacos is committed to help you discover, configure, and manage your microservices.
-**Nacos Basis**
+
+## Setup
+
 1. Download and install Nacos:
 [Quick Start for Nacos](https://nacos.io/en-us/docs/quick-start.html)
 2. Register microservices to Nacos
@@ -292,7 +314,7 @@ spring:
       discovery:
         cluster-name: CA
 ```
-4. Same cluster first loadbalancer
+4. Same cluster first loadbalanced rule
 ```yml
 userservice:
   ribbon:
@@ -323,7 +345,9 @@ spring:
         cluster-name: CA
         ephemeral: false
 ```
-**Configuration managerment**
+
+## Configuration managerment
+
 1. Process
 ![Config fetch process](./images/Screenshot%202023-06-08%20at%204.39.34%20PM.png)
 2. Add dependency to microservices
@@ -373,7 +397,8 @@ For example we have configs:
 The shared configuration can be stored in microservice.yaml, the their priority:
 microservice-env.yaml > microservice.yaml > local yaml
 ```
-**Cluster deployment**
+
+## Cluster deployment
 
 ![Nacos cluster](./images/Screenshot%202023-06-08%20at%205.54.57%20PM.png)
 
@@ -590,4 +615,4 @@ spring:
             maxAge: 360000 # max available time 
 ```
 
-# Zookeeper
+# Zookeeper(unfinished)
