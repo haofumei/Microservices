@@ -17,7 +17,7 @@
 
 
 # Microservices
-## [Microservices SOA Governance](https://github.com/haofumei/Microservices/tree/main/Microservice-SOA-Governance)
+## [Microservices SOA Governance](https://github.com/haofumei/Microservices/tree/main/Microservices/Microservices-SOA-Governance)
 * Service Registration and Discovery
 * Remote Procedure Call, RPC
 * Configuration Management
