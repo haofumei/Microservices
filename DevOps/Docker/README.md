@@ -3,6 +3,10 @@
 - [Volumes](#volumes)
 - [Customized image](#customized-image)
 - [DockerCompose](#dockercompose)
+  - [Demo(deploy a microservices with dockercompose)](#demodeploy-a-microservices-with-dockercompose)
+- [Private Docker Registry](#private-docker-registry)
+  - [Without UI](#without-ui)
+  - [With UI](#with-ui)
 
 
 # Basis
@@ -164,3 +168,143 @@ docker build -t javaweb:1.0 .
 ```
 
 # DockerCompose
+
+[Compose doc](https://docs.docker.com/compose/compose-file/)
+
+Docker compose helps to start distributed applications automatically instead of starting every microservice one by one.
+
+Example:
+```yml
+version: "3.8" # compose version
+services:
+
+# e1: start from an existing image, doesn't need to expose ports here, since they are organized by docker container. It equals to
+
+# docker run \
+#  --name mq \ 
+#  -e MYSQL_ROOT_PASSWORD=123 \
+#  -p 3306:3306 \
+#  -v /tmp/mysql/conf/hmy.cnf:/etc/mysql/conf.d \
+#  -v /tmp/mysql/data:/var/lib/mysql \
+#  -d \
+#  mysql:5.7.25
+
+  mysql: # container name
+    image: mysql:5.7.25 # image 
+    environment: # env variable
+     MYSQL_ROOT_PASSWORD: 123 
+    volumes: 
+     - "/tmp/mysql/data:/var/lib/mysql"
+     -  "/tmp/mysql/conf/hmy.cnf:/etc/mysql/conf.d/hmy.cnf"
+
+# e2: build an image first, and then start from it, it equals to
+# docker build -t web:1.0 . (need dockerfile to build)
+# docker run --name web -p 8090:8090 -d web:1.0
+  web: # image's name
+    build: .
+    ports:
+     - "8090:8090"
+```
+
+## Demo(deploy a microservices with dockercompose)
+
+Suppose our microservices's architecture begins at:
+* demo/gateway/Dockerfile
+* demo/order-service/Dockerfile
+* demo/user-service/Dockerfile
+* demo/mysql
+* docker-compose.yml
+
+1. Prepare docker-compose file(example).
+```yml
+version: "3.2"
+
+services:
+  nacos: # service name
+    image: nacos/nacos-server
+    environment:
+      MODE: standalone
+    ports:
+      - "8848:8848"
+  mysql:
+    image: mysql:5.7.25
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+    volumes:
+      - "$PWD/mysql/data:/var/lib/mysql"
+      - "$PWD/mysql/conf:/etc/mysql/conf.d/"
+  userservice:
+    build: ./user-service
+  orderservice:
+    build: ./order-service
+  # microservices... if you have more
+  gateway:
+    build: ./gateway
+    ports:
+      - "10010:10010" # only expose gateway port
+```
+2. Modify the mysql and nacos's addresses to the service names in docker-compose.
+3. Pack every microservice into **jar** files, and put them into the corresponding directories.
+4. upload demo directory to docker, cd into this demo and type
+```sh
+docker-compose up -d
+```
+
+# Private Docker Registry
+
+[Docker registry doc](https://hub.docker.com/_/registry)
+
+##  Without UI
+
+```sh
+docker run -d \
+    --restart=always \
+    --name registry	\
+    -p 5000:5000 \
+    -v registry-data:/var/lib/registry \
+    registry
+```
+
+Private image was stored at this mapping "registry-data:/var/lib/registry", can check the images at http://YourIp:5000/v2/_catalog.
+
+## With UI
+
+[Doc](https://github.com/Joxit/docker-registry-ui)
+
+```yaml
+version: '3.8'
+
+services:
+  registry-ui:
+    image: joxit/docker-registry-ui:main
+    restart: always
+    ports:
+      - 80:80
+    environment:
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE=Docker Registry UI
+      - DELETE_IMAGES=true
+      - SHOW_CONTENT_DIGEST=true
+      - NGINX_PROXY_PASS_URL=http://registry-server:5000
+      - SHOW_CATALOG_NB_TAGS=true
+      - CATALOG_MIN_BRANCHES=1
+      - CATALOG_MAX_BRANCHES=1
+      - TAGLIST_PAGE_SIZE=100
+      - REGISTRY_SECURED=false
+      - CATALOG_ELEMENTS_LIMIT=1000
+    container_name: registry-ui
+
+  registry-server:
+    image: registry:2.8.2
+    restart: always
+    environment:
+      REGISTRY_HTTP_HEADERS_Access-Control-Origin: '[http://registry.example.com]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Credentials: '[true]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers: '[Authorization,Accept,Cache-Control]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers: '[Docker-Content-Digest]'
+      REGISTRY_STORAGE_DELETE_ENABLED: 'true'
+    volumes:
+      - ./registry/data:/var/lib/registry
+    container_name: registry-server
+```
