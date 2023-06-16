@@ -1,12 +1,12 @@
 **Table of contents**
 
-- [Understanding elasticsearch](#understanding-elasticsearch)
+- [Understanding Elasticsearch](#understanding-elasticsearch)
   - [Forward Index VS Inverted Index](#forward-index-vs-inverted-index)
   - [Basic Concept](#basic-concept)
 - [Installation](#installation)
   - [Single-node Elasticsearch](#single-node-elasticsearch)
   - [Kibana](#kibana)
-  - [Analysis](#analysis)
+  - [Analyzer](#analyzer)
 - [DSL](#dsl)
   - [Mappings](#mappings)
     - [Dynamic Mapping](#dynamic-mapping)
@@ -23,9 +23,27 @@
     - [Sort Search Results](#sort-search-results)
     - [Paginate Search Results](#paginate-search-results)
     - [Highlight](#highlight)
+  - [Aggregations](#aggregations)
+    - [Bucket](#bucket)
+    - [Metrics](#metrics)
+    - [Pipeline](#pipeline)
+- [Autocomplete](#autocomplete)
+  - [Custom Analyzers](#custom-analyzers)
+  - [Completion Suggester](#completion-suggester)
+- [Data synchronization](#data-synchronization)
+  - [Synchronous Call](#synchronous-call)
+  - [Asynchronous Communication](#asynchronous-communication)
+  - [Listen on binlog](#listen-on-binlog)
+- [ES Cluster](#es-cluster)
+  - [Create Cluster for Mappings](#create-cluster-for-mappings)
+  - [Node Types](#node-types)
+  - [Distributed Mechanics](#distributed-mechanics)
+    - [Write](#write)
+    - [Read](#read)
+    - [Failure](#failure)
 
 
-# Understanding elasticsearch
+# Understanding Elasticsearch
 
 Elasticsearch is a distributed, open-source search and analytics engine built on top of Apache Lucene. It is designed to handle large amounts of data and provide near real-time search and analysis capabilities. Elasticsearch is commonly used in applications that require full-text search, structured search, and analytics across a variety of data types.
 
@@ -134,9 +152,31 @@ docker run -d \
 kibana:7.17.6
 ```
 
-## Analysis
+## Analyzer
 
-[IK Analysis](https://github.com/medcl/elasticsearch-analysis-ik) supposes for Chinese.
+* [IK Analysis](https://github.com/medcl/elasticsearch-analysis-ik) supposes for Chinese.
+```sh
+# enter container
+docker exec -it elasticsearch /bin/bash
+# download and install
+./bin/elasticsearch-plugin  install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v7.17.6/elasticsearch-analysis-ik-7.17.6.zip
+#exit
+exit
+#restart
+docker restart elasticsearch
+```
+
+* [Pinyin Analysis](https://github.com/medcl/elasticsearch-analysis-pinyin)
+```sh
+# enter container
+docker exec -it elasticsearch /bin/bash
+# download and install
+./bin/elasticsearch-plugin  install https://github.com/medcl/elasticsearch-analysis-pinyin/releases/download/v7.17.6/elasticsearch-analysis-pinyin-7.17.6.zip
+#exit
+exit
+#restart
+docker restart elasticsearch
+```
 
 # DSL
 
@@ -669,4 +709,454 @@ GET /indexName/_search
 }
 ```
 
+## [Aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html)
 
+An aggregation summarizes your data as metrics, statistics, or other analytics. 
+
+### Bucket
+
+Aggregations that group documents into buckets, also called bins, based on field values, ranges, or other criteria.
+
+```JSON
+// basic format
+GET /hotel/_search
+{
+  "size": 0,  // not include document in result
+  "aggs": { 
+    "brandAgg": { // assigned aggregation name
+      "terms": { // aggregation type
+        "field": "brand", // aggregation field
+        "size": 20 //number of return
+      },
+    "cityAgg": { // multi-aggregation
+      "terms": {
+        "field": "city", 
+        "size": 20 
+      }
+    }
+    }
+  }
+}
+// more search config
+GET /hotel/_search
+{
+  // constrain aggregated result
+  "query": {
+    "range": {
+      "price": {
+        "lte": 200 
+      }
+    }
+  }, 
+  "size": 0, 
+  "aggs": {
+    "brandAgg": {
+      "terms": {
+        "field": "brand",
+        "order": { // asc order
+           "_count": "asc"
+        },
+        "size": 20
+      }
+    }
+  }
+}
+```
+
+### Metrics
+
+Aggregations that calculate metrics, such as a sum or average, from field values.
+
+```JSON
+GET /hotel/_search
+{
+  "size": 0, 
+  "aggs": {
+    "avgScore":{
+      "avg": {
+        "field": "score"
+      }
+    }
+  }
+}
+```
+### Pipeline
+
+Aggregations that take input from other aggregations instead of documents or fields.
+
+```JSON
+GET /hotel/_search
+{
+  "size": 0, 
+  "aggs": {
+    "brandAgg": { 
+      "terms": { 
+        "field": "brand", 
+        "order": { // order by metrics 
+          "score_stats.avg": "asc"
+        },
+        "size": 20
+      },
+      "aggs": { // sub aggregation
+        "score_stats": { // aggregation name
+          "stats": { // aggregation type: min, max, avg...
+            "field": "score" // aggregation field
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+# Autocomplete
+
+## Custom Analyzers
+
+Analyzer can be divided into:
+* character filters: character filters are used to preprocess the stream of characters before it is passed to the tokenizer.
+* tokenizer: a tokenizer receives a stream of characters, breaks it up into individual tokens (usually individual words), and outputs a stream of tokens. 
+* tokenizer filter: token filters accept a stream of tokens from a tokenizer and can modify tokens (eg lowercasing), delete tokens (eg remove stopwords) or add tokens (eg synonyms).
+
+![custom analyzer](./images/Screenshot%202023-06-15%20at%2010.08.35%20AM.png)
+
+* Create custom analyzer
+```JSON
+PUT /test
+{
+  "settings": {
+    "analysis": {
+      "analyzer": { // custom analyzer
+        "my_analyzer": {  // custom analyzer name
+          "tokenizer": "ik_max_word",
+          "filter": "py"
+        }
+      },
+      "filter": { // custom tokenizer filter
+        "py": { // custom filter name
+          "type": "pinyin", 
+	        "keep_full_pinyin": false,
+          "keep_joined_full_pinyin": true,
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "remove_duplicated_term": true,
+          "none_chinese_pinyin_tokenize": false
+        }
+      }
+    }
+  }
+}
+```
+* Apply custom analyzer
+```JSON
+PUT /test
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "my_analyzer": {
+          "tokenizer": "ik_max_word", "filter": "py"
+        }
+      },
+      "filter": {
+        "py": { ... }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text",
+        "analyzer": "my_analyzer", // mapping created analyzer
+        "search_analyzer": "ik_smart" // searching analyzer
+      }
+    }
+  }
+}
+```
+
+## [Completion Suggester](https://www.elastic.co/guide/en/elasticsearch/reference/7.6/search-suggesters.html#completion-suggester)
+
+```JSON
+// 1. create mappings
+// field type has to "completion"
+PUT test
+{
+  "mappings": {
+    "properties": {
+      "title":{
+        "type": "completion"
+      }
+    }
+  }
+}
+// 2. completion fields should be a list of text
+POST test/_doc
+{
+  "title": ["Sony", "WH-1000XM3"]
+}
+POST test/_doc
+{
+  "title": ["SK-II", "PITERA"]
+}
+POST test/_doc
+{
+  "title": ["Nintendo", "switch"]
+}
+// 3. get autocomplete result
+GET /test/_search
+{
+  "suggest": {
+    "title_suggest": {
+      "text": "s", // input
+      "completion": {
+        "field": "title", 
+        "skip_duplicates": true, 
+        "size": 10 
+      }
+    }
+  }
+}
+```
+
+**Example:**
+
+```JSON
+PUT /hotel
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "text_analyzer": { // for creating mappings
+          "tokenizer": "ik_max_word", 
+           "filter": "py"
+        },
+        "completion_analyzer": { // for suggester
+          "tokenizer": "keyword", 
+           "filter": "py"
+        }
+      },
+      "filter": { 
+        "py": { 
+          "type": "pinyin", 
+	        "keep_full_pinyin": false,
+          "keep_joined_full_pinyin": true,
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "remove_duplicated_term": true,
+          "none_chinese_pinyin_tokenize": false
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "text",
+        "analyzer": "text_analyzer", 
+        "search_analyzer": "ik_smart", 
+        "copy_to": "all"
+      },
+      "address": {
+        "type": "keyword",
+        "index": false
+      },
+      "price": {
+        "type": "integer"
+      },
+      "score": {
+        "type": "integer"
+      },
+      "brand": {
+        "type": "keyword",
+        "copy_to": "all"
+      },
+      "city": {
+        "type": "keyword"
+      },
+      "starName": {
+        "type": "keyword"
+      },
+      "business": {
+        "type": "keyword",
+        "copy_to": "all"
+      },
+      "location": {
+        "type": "geo_point"
+      },
+      "pic": {
+        "type": "keyword",
+        "index": false
+      },
+      "all": {
+        "type": "text",
+        "analyzer": "text_analyzer",
+        "search_analyzer": "ik_smart"
+      },
+      "suggestion": {
+        "type": "completion",
+        "analyzer": "completion_analyzer"
+      }
+    }
+  }
+}
+```
+
+# Data synchronization
+
+## Synchronous Call
+
+* pros: simple
+* cons: tight coupling
+
+![Synchronous Call](./images/Screenshot%202023-06-15%20at%2012.49.28%20PM.png)
+
+## Asynchronous Communication
+
+* pros: loose coupling
+* cons: rely on reliability of MQ
+
+![Asynchronous Communication](./images/Screenshot%202023-06-15%20at%2012.56.25%20PM.png)
+
+**Example:**
+
+1. Define exchange, queue, and routingKey.
+2. Add publish in hotel-admin.
+3. Add consumer in hotel-demo.
+
+![MQ example](./images/Screenshot%202023-06-15%20at%204.34.04%20PM.png)
+
+
+## Listen on binlog
+
+* pros: no coupling
+* cons: put pressure on database
+
+![Listen on binlog](./images/Screenshot%202023-06-15%20at%2012.56.53%20PM.png)
+
+# ES Cluster
+
+**3 docker container to simulate 3 nodes**
+1. docker compose
+```yml
+version: '2.2'
+services:
+  es01:
+    image: elasticsearch:7.17.6
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster # cluster name has to be same
+      - discovery.seed_hosts=es02,es03 # ip address
+      - cluster.initial_master_nodes=es01,es02,es03 # nodes can be voted
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+  es02:
+    image: elasticsearch:7.17.6
+    container_name: es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+    ports:
+      - 9201:9200
+    networks:
+      - elastic
+  es03:
+    image: elasticsearch:7.17.6
+    container_name: es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+    ports:
+      - 9202:9200
+volumes:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge
+```
+2. run
+```sh
+ docker-compose up -d
+```
+
+## Create Cluster for Mappings
+```JSON
+// once created, can't be modified
+PUT /indexName
+{
+  "settings": {
+    "number_of_shards": 3
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      
+    }
+  }
+}
+```
+
+## Node Types
+
+By default, node has all the responsibility.
+
+| Type | Config | Default | Responsibility |
+| - | - | - | - | 
+| master eligible | node.master | true | nodes can be voted |
+| data | node.data | true | store data, search, aggregation and CRUD |
+|ingest | node.ingest | true | pre-process before storing data |
+| coordinating | when last 3 configs not set | none | direct requests and return result to client |
+
+![ES Cluster Arc](./images/Screenshot%202023-06-15%20at%205.39.21%20PM.png)
+
+Every node should have its own responsibility when deploying.
+
+## Distributed Mechanics
+
+**Split Brain**: quorum vote(2f+1)
+
+**ES targets corresponding shard by(routing is default to document id)**
+
+$shard = hash(routing) \ \% \ number\ of\ shards$
+
+### Write
+
+![ES write](./images/Screenshot%202023-06-15%20at%205.51.47%20PM.png)
+
+### Read
+
+* scatter phase: direct the requests to all shard if no routing key
+* gather phase: gather all the results from shards, and return
+
+![ES read](./images/Screenshot%202023-06-15%20at%205.52.10%20PM.png)
+
+### Failure
+
+![ES migration](./images/Screenshot%202023-06-15%20at%206.01.31%20PM.png)

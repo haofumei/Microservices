@@ -20,6 +20,10 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.elasticsearch.xcontent.XContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,6 +106,50 @@ public class HotelIndexTest {
         SearchResponse response = client.search(request, RequestOptions.DEFAULT);
 
         handleResponse(response);
+    }
+
+    @Test
+    void initiateES() throws IOException {
+        List<Hotel> hotels = hotelService.list();
+
+        BulkRequest bulkRequest = new BulkRequest();
+
+        for (Hotel hotel : hotels) {
+            HotelDoc hotelDoc = new HotelDoc(hotel);
+
+            bulkRequest.add(new IndexRequest("hotel")
+                    .id(hotelDoc.getId().toString())
+                    .source(JSON.toJSONString(hotelDoc), XContentType.JSON));
+
+        }
+
+        client.bulk(bulkRequest, RequestOptions.DEFAULT);
+    }
+
+    @Test
+    void testSuggest() throws IOException {
+        SearchRequest request = new SearchRequest("hotel");
+
+        request.source().suggest(new SuggestBuilder().addSuggestion(
+                "suggestion",
+                SuggestBuilders.completionSuggestion("suggestion")
+                        .prefix("h")
+                        .skipDuplicates(true)
+                        .size(10)
+        ));
+
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+
+        Suggest suggest = response.getSuggest();
+
+        CompletionSuggestion suggestions = suggest.getSuggestion("suggestion");
+
+        List<CompletionSuggestion.Entry.Option> options = suggestions.getOptions();
+
+        for (CompletionSuggestion.Entry.Option option : options) {
+            String text = option.getText().toString();
+            System.out.println(text);
+        }
     }
 
     @BeforeEach
