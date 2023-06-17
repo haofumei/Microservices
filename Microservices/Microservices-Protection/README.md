@@ -2,8 +2,9 @@
 
 - [Sentinel](#sentinel)
   - [Avalanche](#avalanche)
-  - [Sentinel](#sentinel-1)
-    - [Installation](#installation)
+  - [Sentinel VS Hystrix](#sentinel-vs-hystrix)
+  - [Installation](#installation)
+    - [Sentinel](#sentinel-1)
     - [Jmeter](#jmeter)
 - [Flow Control](#flow-control)
   - [Flow control Modes](#flow-control-modes)
@@ -40,7 +41,7 @@ Failure of one microservice cascade to all microservices.
 * Circuit-breaker: breaker will intercept all the requests to a service if the abnormal proportion of its execution reaches a threshold.
 * Traffic control: limit QPS so as to avoid service failure due to sudden increase in traffic.
 
-## Sentinel
+## Sentinel VS Hystrix
 
 | | Sentinel | Hystrix |
 | - | - | - |
@@ -56,9 +57,9 @@ Failure of one microservice cascade to all microservices.
 | Console | Config, Monitoring, discovery... | Limited |
 | Adaptation | Servlet, Spring Cloud, Dubbo, gRPC | Servlet, Spring Cloud Netflix |
 
-### [Installation](https://github.com/alibaba/Sentinel)
+## [Installation](https://github.com/alibaba/Sentinel)
 
-**Sentinel:**
+### Sentinel
 
 1. Download jar.
 2. Visit localhost:8080, user and password are default to sentinel.
