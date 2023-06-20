@@ -24,14 +24,14 @@
 * Gateway and Router
 
 ## [Microservices Protection](https://github.com/haofumei/Microservices/tree/main/Microservices/Microservices-Protection)
-## Distributed Transaction
+## [Distributed Transaction](https://github.com/haofumei/Microservices/tree/main/Microservices/Distributed-Transaction)
 
 # Asynchronous Communication
 ## [Asynchronous Communication](https://github.com/haofumei/Microservices/tree/main/Asynchronous-Communication/Asynchronous-Communication)
 ## Reliable Messaging Service
 
 # Cache
-## Distributed Cache
+## [Distributed Cache](https://github.com/haofumei/Microservices/tree/main/Cache/Distributed-Cache)
 ## Multi-level Cache
 ## Redis Cluster
 
