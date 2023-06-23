@@ -18,11 +18,17 @@
 - [Nacos](#nacos)
   - [Setup](#setup-2)
   - [Configuration managerment](#configuration-managerment)
+  - [Configuration Architecture](#configuration-architecture)
+    - [namespace](#namespace)
+    - [Configuration Group](#configuration-group)
+    - [Configuration Set](#configuration-set)
   - [Cluster deployment](#cluster-deployment)
 - [Gateway](#gateway)
   - [Gateway integrates with discovery(Nacos)](#gateway-integrates-with-discoverynacos)
-  - [Route Predicate Factory](#route-predicate-factory)
-  - [Gateway Filter Factory](#gateway-filter-factory)
+  - [Predicate](#predicate)
+    - [Route Predicate Factory](#route-predicate-factory)
+  - [Filter](#filter)
+    - [Gateway Filter Factory](#gateway-filter-factory)
   - [CORS](#cors)
 - [Zookeeper(unfinished)](#zookeeperunfinished)
 
@@ -398,6 +404,63 @@ The shared configuration can be stored in microservice.yaml, the their priority:
 microservice-env.yaml > microservice.yaml > local yaml
 ```
 
+## Configuration Architecture
+
+### namespace
+
+**setup**
+
+add to bootstrap.yml
+```properties
+spring.cloud.nacos.config.namespace=namespace_id
+```
+
+**usage**
+
+* Separate configurations(dev, test, prod)
+* Let every microservice has its own namespace
+
+### Configuration Group
+
+**setup**
+
+add to bootstrap.yml
+```properties
+spring.cloud.nacos.config.group=group name
+```
+
+**usage**
+
+Let every microservice has its own namespace, and then separate the configurations into dev, test, prod... groups.
+
+### Configuration Set
+
+**setup**
+
+add to bootstrap.yml
+```properties
+# at the namespace
+spring.cloud.nacos.config.namespace=test
+# first
+spring.cloud.nacos.config.extension-configs[0].group=dev
+spring.cloud.nacos.config.extension-configs[0].data-id=datasource.yml
+spring.cloud.nacos.config.extension-configs[0].refresh=true
+#second
+spring.cloud.nacos.config.extension-configs[1].group=dev
+spring.cloud.nacos.config.extension-configs[1].data-id=other.yml
+spring.cloud.nacos.config.extension-configs[1].refresh=true
+# third
+spring.cloud.nacos.config.extension-configs[2].group=dev
+spring.cloud.nacos.config.extension-configs[2].data-id=cloud.yml
+spring.cloud.nacos.config.extension-configs[2].refresh=true
+```
+
+**usage**
+
+* Every microservice's every configuration can be split and stored in nacos.
+* @Value, @ConfigurationProperties can read the values from these configuration.
+
+
 ## Cluster deployment
 
 ![Nacos cluster](./images/Screenshot%202023-06-08%20at%205.54.57%20PM.png)
@@ -449,6 +512,8 @@ server {
 
 # Gateway
 
+The basic building block of the gateway. It is defined by an ID, a destination URI, a collection of predicates, and a collection of filters. A route is matched if the aggregate predicate is true.
+
 1. User authentication and authorization.
 2. User routing and load balancing.
 3. User traffic limiting.
@@ -492,7 +557,12 @@ spring:
             - Path=/order/**
 ```
 
-## Route Predicate Factory
+## Predicate
+
+This is a Java 8 Function Predicate. The input type is a Spring Framework ServerWebExchange. This lets you match on anything from the HTTP request, such as headers or parameters.
+
+### [Route Predicate Factory](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#gateway-request-predicates-factories)
+
 | name   | direction | example |
 | ---- | ----- | ----- |
 | After      | request after this time | - After=2037-01-20T17:42:47.789-07:00[America/Denver] |
@@ -507,7 +577,12 @@ spring:
 | RemoteAddr | ip in this range | - RemoteAddr=192.168.1.1/24 |
 | Weight     | 
 
-## Gateway Filter Factory
+## Filter
+
+These are instances of GatewayFilter that have been constructed with a specific factory. Here, you can modify requests and responses before or after sending the downstream request.
+
+### [Gateway Filter Factory](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#gatewayfilter-factories)
+
 | name | direction |
 | ---- | ------ |
 | AddRequestHeader |
