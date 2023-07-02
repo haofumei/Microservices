@@ -7,12 +7,17 @@
   - [Single-node Elasticsearch](#single-node-elasticsearch)
   - [Kibana](#kibana)
   - [Analyzer](#analyzer)
+    - [Custom Dictionary](#custom-dictionary)
+  - [Integration](#integration)
 - [DSL](#dsl)
+  - [Basic](#basic)
   - [Mappings](#mappings)
     - [Dynamic Mapping](#dynamic-mapping)
+    - [Data Migration](#data-migration)
   - [Document](#document)
   - [Query](#query)
     - [match\_all](#match_all)
+    - [match\_phrase](#match_phrase)
     - [Full text](#full-text)
     - [Term-level](#term-level)
     - [Geo](#geo)
@@ -158,7 +163,7 @@ kibana:7.17.6
 ```sh
 # enter container
 docker exec -it elasticsearch /bin/bash
-# download and install
+# download and install(will modify the default config path of ik), or download ik manually
 ./bin/elasticsearch-plugin  install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v7.17.6/elasticsearch-analysis-ik-7.17.6.zip
 #exit
 exit
@@ -178,7 +183,93 @@ exit
 docker restart elasticsearch
 ```
 
+### Custom Dictionary
+
+**Remote**
+
+1. Put dictionary under nginx/html/
+2. Config in the analysis configuration file
+
+## Integration 
+
+* 9300:TCP
+  * spring-data-elasticsearch:transport-api.jar (deprecated)
+* 9200:HTTP
+  * JestClient(deprecated)
+  * RestTemplate: need encapsulation
+  * HttpClient: need encapsulation
+  * [Elasticsearch-Rest-Client](https://www.elastic.co/guide/en/elasticsearch/client/index.html): needn't encapsulation, easy
+
 # DSL
+
+## Basic
+
+```json
+// health info
+GET http://localhost:9200/_cat/health
+
+// master info
+GET http://localhost:9200/_cat/master
+
+// indices info 
+GET http://localhost:9200/_cat/indices
+
+// Post with id: update even data is same
+Post http://localhost:9200/customer/external/1
+{
+    "name": "Tom"
+}
+// Post without id: add
+Post http://localhost:9200/customer/external
+{
+    "name": "Tom"
+}
+
+// Put must have id: update even data is same
+http://localhost:9200/customer/external/1
+{
+    "name": "Tom"
+}
+
+// Positive Lock Update
+Post http://localhost:9200/customer/external/1?if_seq_no=3&if_primary_term=1
+{
+    "name": "Tom"
+}
+
+// Post with _update: do nothing if data is same
+Post http://localhost:9200/customer/external/1/_update
+{
+    "doc": {
+        "name": "haofu"
+    }
+}
+
+// Delete: can not delete type
+Delete http://localhost:9200/customer/external/1/
+Delete http://localhost:9200/customer
+
+// Bulk format
+{ action: { metadata }} \n
+{ request body } \n
+{ action: { metadata }} \n
+{ request body } \n
+// Example 1:
+POST customer/external/_bulk
+{ "index": { "_id": "1" }}
+{ "name": "Tom" }
+{ "index": { "_id": "2" }}
+{ "name": "Jane" }
+// Example 2:
+POST /_bulk
+{ "delete": { "_index": "website", "_type": "blog", "_id": "123" }} 
+{ "create": { "_index": "website", "_type": "blog", "_id": "123" }}
+{ "title": "My first blog post" }
+{ "index": { "_index": "website", "_type": "blog"}}
+{ "title": "My second blog post" }
+{ "update": { "_index": "website", "_type": "blog", "_id": "123"} } 
+{ "doc" : {"title" : "My updated blog post"} }
+```
 
 ## Mappings
 
@@ -283,6 +374,32 @@ New mapping will be created automatically when inserting new document to ES if t
 | Nested Object | object, and add properties |
 | Array | decide by first non-null var in array |
 | NULL | ignore |
+
+### Data Migration
+```json
+// new version
+POST _reindex 
+{
+  "source": {
+    "index": "twitter"
+  }, 
+  "dest": {
+    "index": "new_twitter" 
+  }
+}
+
+// old version with type
+POST _reindex 
+{
+  "source": {
+    "index": "twitter",
+    "type": "tweet"
+  }, 
+  "dest": {
+    "index": "tweets" 
+  }
+}
+```
 
 ## Document
 
@@ -406,6 +523,28 @@ GET /hotel/_search
 {
   "query": {
     "match_all": {}
+  }
+}
+```
+
+### match_phrase
+```JSON
+// search by phrase(if this phrase exist in address, include)
+GET /hotel/_search
+{
+  "query": {
+    "match_phrase": {
+      "address": "789 Madison"
+    }
+  }
+}
+// keyword as a precise searching condition(must equal)
+GET /hotel/_search
+{
+  "query": {
+    "match": {
+      "address.keyword": "789 Madison"
+    }
   }
 }
 ```
